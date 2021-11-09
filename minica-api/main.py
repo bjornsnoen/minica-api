@@ -4,7 +4,7 @@ from os import chdir
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CompletedProcess, run
-from typing import List, Optional
+from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -23,12 +23,25 @@ def get_minica_root_cert() -> Path:
     return cert_dir / "minica.pem"
 
 
-def minica_command(args: List[str]) -> CompletedProcess:
+def minica_command(args: list[str]) -> CompletedProcess:
     return run([get_minica_bin()] + args, capture_output=True, cwd=cert_dir, text=True)
 
 
-def get_domain_pem(domain: str) -> Path:
+def get_domain_pem_file(domain: str) -> Path:
     return cert_dir / domain / "cert.pem"
+
+
+def get_domain_pem(domain: str) -> x509.Certificate:
+    pem = get_domain_pem_file(domain)
+    if not pem.exists():
+        raise HTTPException(
+            status_code=404,
+            detail={"message": "Domain pem not found", "domain": domain},
+        )
+
+    pem_data = pem.read_bytes()
+    cert = x509.load_pem_x509_certificate(pem_data, backend=default_backend())
+    return cert
 
 
 @dataclass
@@ -53,7 +66,7 @@ def init():
         proc = minica_command(["--ip-addresses", "127.0.0.1"])
         if proc.returncode > 0:
             print(proc.stderr.strip())
-        rmtree(get_domain_pem("127.0.0.1").parent)
+        rmtree(get_domain_pem_file("127.0.0.1").parent)
 
     return FastAPI()
 
@@ -73,15 +86,7 @@ async def certgen(domain: str):
 
 @app.put("/certs/{domain}")
 async def certupdate(domain: str):
-    pem = get_domain_pem(domain)
-    if not pem.exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"message": "Domain pem not found"},
-        )
-
-    pem_data = pem.read_bytes()
-    cert = x509.load_pem_x509_certificate(pem_data, backend=default_backend())
+    cert = get_domain_pem(domain)
     seconds_until_expired: timedelta = cert.not_valid_after - datetime.now()
     days_until_expired = int(seconds_until_expired.total_seconds() / 60 / 60 / 24)
 
@@ -98,3 +103,14 @@ async def root():
         raise HTTPException(404, {"message": "Root ca has not yet been generated"})
 
     return {"cert": get_minica_root_cert().read_text().strip()}
+
+
+@app.get("/expires")
+async def expires():
+    domains: dict[str, x509.Certificate] = dict()
+    for file in cert_dir.iterdir():
+        if not file.is_dir():
+            continue
+        domains[file.name] = get_domain_pem(file.name).not_valid_after
+
+    return domains

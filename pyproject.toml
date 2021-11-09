@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "minica-api"
+version = "0.1.0"
+description = "A simple API to wrap jsha/minica"
+authors = ["Bjørn Snoen <bjorn.snoen@gmail.com>"]
+license = "GPLv3"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = {extras = ["all"], version = "^0.70.0"}
+cryptography = "^35.0.0"
+
+[tool.poetry.dev-dependencies]
+black = "^21.10b0"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

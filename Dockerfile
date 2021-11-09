@@ -5,15 +5,17 @@ RUN go install github.com/jsha/minica@latest
 
 FROM python:3.9-alpine as fastapi-builder
 WORKDIR /app
-ENV PIPENV_VENV_IN_PROJECT=1
-COPY Pipfile Pipfile.lock /app/
-RUN apk add build-base libffi libffi-dev \
-    && pip install pipenv \
-    && pipenv install
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
+COPY pyproject.toml poetry.lock /app/
+RUN apk add build-base libffi libffi-dev rust cargo openssl openssl-dev
+RUN pip install poetry
+RUN poetry install --no-dev --no-root
 COPY minica-api /app/minica-api
 
 
 FROM python:3.9-alpine as runner
+RUN apk add libgcc
 COPY --from=minica-builder /go/bin/minica /usr/bin/
 COPY --from=fastapi-builder /app /app
 WORKDIR /app
