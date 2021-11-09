@@ -6,6 +6,7 @@ from shutil import rmtree
 from subprocess import CompletedProcess, run
 from typing import Optional
 
+import toml
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from fastapi import FastAPI, HTTPException
@@ -52,9 +53,26 @@ class GeneratePemResponse:
 
 def generate_pem(domain: str) -> GeneratePemResponse:
     proc = minica_command(["--domains", domain])
+    update_traefik_list()
     return GeneratePemResponse(
         proc.returncode, proc.stderr.strip() if proc.returncode > 0 else "success"
     )
+
+
+def update_traefik_list():
+    out_file = cert_dir / "certificates.toml"
+    contents = {"tls": {"certificates": []}}
+    for file in cert_dir.iterdir():
+        if not file.is_dir():
+            continue
+        cert = file / "cert.pem"
+        key = file / "key.pem"
+        contents["tls"]["certificates"].append(
+            {"certFile": str(cert.resolve()), "keyFile": str(key.resolve())}
+        )
+
+    with out_file.open("w") as f:
+        toml.dump(contents, f)
 
 
 def init():
