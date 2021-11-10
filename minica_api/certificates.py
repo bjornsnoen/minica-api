@@ -33,8 +33,9 @@ class CertManager:
             proc = self.minica_command(["--ip-addresses", "127.0.0.1"])
             if proc.returncode > 0:
                 print(proc.stderr.strip())
-                exit(2)
+                exit(proc.returncode)
             rmtree(self.get_domain_pem_file("127.0.0.1").parent)
+            self.get_minica_root_cert().chmod(644)
 
     def get_minica_bin(self) -> str:
         return run(["which", "minica"], capture_output=True).stdout.strip()
