@@ -7,11 +7,12 @@ FROM python:3.9-slim-bullseye as fastapi-builder
 WORKDIR /app
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
-COPY pyproject.toml poetry.lock /app/
-RUN apt-get update -y && apt-get install -y build-essential libffi-dev cargo openssl curl
+RUN apt-get update -y && apt-get install -y build-essential libffi-dev cargo openssl curl git
 RUN pip install poetry
+COPY pyproject.toml poetry.lock /app/
 RUN poetry install --no-dev --no-root
-COPY minica-api /app/minica-api
+COPY minica_api /app/minica_api
+COPY supervisord.conf /app/
 
 
 FROM python:3.9-slim-bullseye as runner
@@ -21,4 +22,4 @@ COPY --from=fastapi-builder /app /app
 WORKDIR /app
 EXPOSE 80
 
-CMD [".venv/bin/uvicorn", "minica-api.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD [".venv/bin/supervisord", "-n", "-c", "supervisord.conf"]

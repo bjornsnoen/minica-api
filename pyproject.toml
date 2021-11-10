@@ -10,6 +10,8 @@ python = "^3.9"
 fastapi = {extras = ["all"], version = "^0.70.0"}
 cryptography = "^35.0.0"
 toml = "^0.10.2"
+docker = "^5.0.3"
+supervisor = "^4.2.2"
 
 [tool.poetry.dev-dependencies]
 black = "^21.10b0"
