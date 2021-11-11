@@ -35,7 +35,7 @@ class CertManager:
                 print(proc.stderr.strip())
                 exit(proc.returncode)
             rmtree(self.get_domain_pem_file("127.0.0.1").parent)
-            self.get_minica_root_cert().chmod(644)
+            self.get_minica_root_cert().chmod(0o644)
 
     def get_minica_bin(self) -> str:
         return run(["which", "minica"], capture_output=True).stdout.strip()
