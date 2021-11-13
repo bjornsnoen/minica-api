@@ -1,4 +1,4 @@
-.PHONY: clean all prodvenv proper run realclean
+.PHONY: clean all prodvenv proper realclean
 
 all: lib/minica .venv proper
 
