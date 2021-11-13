@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from os import getenv
-from time import sleep
 from re import search
+from time import sleep
 
 import docker
 

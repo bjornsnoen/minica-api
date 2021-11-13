@@ -1,8 +1,9 @@
+from ctypes import c_char_p, cdll
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from os import chdir, getcwd
 from pathlib import Path
 from shutil import rmtree
-from subprocess import CompletedProcess, run
 from typing import Optional
 
 import toml
@@ -23,6 +24,7 @@ class GeneratePemResponse:
 
 class CertManager:
     cert_dir = Path("certificates")
+    minicaso = None
 
     def __init__(self):
         if not self.cert_dir.is_dir():
@@ -30,26 +32,26 @@ class CertManager:
 
         if not self.get_minica_root_cert().exists():
             print("Initializing minica root cert")
-            proc = self.minica_command(["--ip-addresses", "127.0.0.1"])
-            if proc.returncode > 0:
-                print(proc.stderr.strip())
-                exit(proc.returncode)
-            rmtree(self.get_domain_pem_file("127.0.0.1").parent)
+            code = self.create_certificate("tmp.loc")
+            if code > 0:
+                print("Can't initialize minica subsystem")
+                exit(code)
+            rmtree(self.get_domain_pem_file("tmp.loc").parent)
             self.get_minica_root_cert().chmod(0o644)
 
-    def get_minica_bin(self) -> str:
-        return run(["which", "minica"], capture_output=True).stdout.strip()
+    def create_certificate(self, domain: str) -> int:
+        if not self.minicaso:
+            location = Path(__file__).parent.parent / "lib/minica"
+            self.minicaso = cdll.LoadLibrary(location)
+
+        kept_cwd = getcwd()
+        chdir(self.cert_dir)
+        value = self.minicaso.generateCertificate(c_char_p(domain.encode("utf-8")))
+        chdir(kept_cwd)
+        return value
 
     def get_minica_root_cert(self) -> Path:
         return self.cert_dir / "minica.pem"
-
-    def minica_command(self, args: list[str]) -> CompletedProcess:
-        return run(
-            [self.get_minica_bin()] + args,
-            capture_output=True,
-            cwd=self.cert_dir,
-            text=True,
-        )
 
     def get_domain_pem_file(self, domain: str) -> Path:
         return self.cert_dir / domain / "cert.pem"
@@ -64,11 +66,11 @@ class CertManager:
         return cert
 
     def generate_pem(self, domain: str) -> GeneratePemResponse:
-        proc = self.minica_command(["--domains", domain])
+        return_code = self.create_certificate(domain)
         self.update_traefik_list()
         return GeneratePemResponse(
-            error=proc.returncode,
-            message=proc.stderr.strip() if proc.returncode > 0 else "success",
+            error=return_code,
+            message="Error generating pem" if return_code > 0 else "success",
             domain=domain,
         )
 

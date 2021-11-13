@@ -1,6 +1,8 @@
 FROM golang:bullseye as minica-builder
 
-RUN go install github.com/jsha/minica@latest
+COPY lib/ /go/lib
+COPY Makefile /go/
+RUN make lib/minica
 
 
 FROM python:3.9-slim-bullseye as fastapi-builder
@@ -17,8 +19,8 @@ COPY supervisord.conf /app/
 
 FROM python:3.9-slim-bullseye as runner
 RUN apt-get update -y && apt-get install -y libgcc-s1
-COPY --from=minica-builder /go/bin/minica /usr/bin/
 COPY --from=fastapi-builder /app /app
+COPY --from=minica-builder /go/lib/ /app/lib
 WORKDIR /app
 EXPOSE 80
 
