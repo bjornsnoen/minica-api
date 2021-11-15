@@ -3,6 +3,7 @@ WORKDIR /app
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
 RUN apt-get update -y && apt-get install -y build-essential libffi-dev cargo openssl curl git golang
+RUN apt-get install libssl-dev
 RUN pip install poetry
 COPY pyproject.toml poetry.lock /app/
 RUN poetry install --no-dev --no-root
