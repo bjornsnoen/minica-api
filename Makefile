@@ -1,14 +1,11 @@
 .PHONY: clean all prodvenv proper realclean
 
-all: lib/minica .venv proper
-
-lib/minica:
-	$(MAKE) -C lib minica
+all: .venv proper
 
 .venv: poetry.lock
 	VIRTUALENVS_IN_PROJECT=1 poetry install --no-root
 
-prodvenv: lib/minica poetry.lock
+prodvenv: poetry.lock
 	VIRTUALENVS_IN_PROJECT=1 poetry install --no-root --no-dev
 
 proper: .venv
@@ -16,8 +13,7 @@ proper: .venv
 	.venv/bin/isort --profile=black minica_api
 
 clean:
-	$(MAKE) -C lib clean
-	rm -rf certificates
+	rm -rf certificates dist
 
 realclean: clean
 	rm -rf .venv

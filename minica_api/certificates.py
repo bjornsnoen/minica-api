@@ -1,4 +1,3 @@
-from ctypes import c_char_p, cdll
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from os import chdir, getcwd
@@ -9,6 +8,7 @@ from typing import Optional
 import toml
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from minicapy.minica import create_domain_cert
 
 
 class CertificateDoesNotExistException(Exception):
@@ -40,13 +40,9 @@ class CertManager:
             self.get_minica_root_cert().chmod(0o644)
 
     def create_certificate(self, domain: str) -> int:
-        if not self.minicaso:
-            location = Path(__file__).parent.parent / "lib/minica"
-            self.minicaso = cdll.LoadLibrary(location)
-
         kept_cwd = getcwd()
         chdir(self.cert_dir)
-        value = self.minicaso.generateCertificate(c_char_p(domain.encode("utf-8")))
+        value = create_domain_cert(domain)
         chdir(kept_cwd)
         return value
 

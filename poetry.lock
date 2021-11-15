@@ -264,6 +264,14 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "minicapy"
+version = "1.0.0"
+description = "Minica python lib"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "mypy-extensions"
 version = "0.4.3"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
@@ -539,7 +547,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "9cdc19996eee0d2f76f1bf81cf4374fb69d572291b4536ea304435e7a86db655"
+content-hash = "2aea0f3621eaee25a01fcc9f9521d73d892062e0d3778b4f4d5bd52dc7722e7d"
 
 [metadata.files]
 anyio = [
@@ -767,6 +775,9 @@ markupsafe = [
     {file = "MarkupSafe-2.0.1-cp39-cp39-win32.whl", hash = "sha256:10f82115e21dc0dfec9ab5c0223652f7197feb168c940f3ef61563fc2d6beb74"},
     {file = "MarkupSafe-2.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:693ce3f9e70a6cf7d2fb9e6c9d8b204b6b39897a2c4a1aa65728d5ac97dcc1d8"},
     {file = "MarkupSafe-2.0.1.tar.gz", hash = "sha256:594c67807fb16238b30c44bdf74f36c02cdf22d1c8cda91ef8a0ed8dabf5620a"},
+]
+minicapy = [
+    {file = "minicapy-1.0.0.tar.gz", hash = "sha256:558f5ffca8113be645e3cd92ec0b62d80d1c688d252b9ddddc9f2be9c76dfad4"},
 ]
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
