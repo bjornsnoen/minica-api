@@ -17,3 +17,5 @@ WORKDIR /app
 EXPOSE 80
 
 CMD [".venv/bin/supervisord", "-n", "-c", "supervisord.conf"]
+
+LABEL org.opencontainers.image.source = "https://github.com/bjornsnoen/minica-api"
