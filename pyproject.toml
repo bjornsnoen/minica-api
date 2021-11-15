@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "minica-api"
-version = "0.1.0"
+version = "1.0.0"
 description = "A simple API to wrap jsha/minica"
 authors = ["Bjørn Snoen <bjorn.snoen@gmail.com>"]
 license = "GPLv3"
