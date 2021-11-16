@@ -24,20 +24,19 @@ class GeneratePemResponse:
 
 class CertManager:
     cert_dir = Path("certificates")
-    minicaso = None
 
     def __init__(self):
         if not self.cert_dir.is_dir():
             self.cert_dir.mkdir()
 
-        if not self.get_minica_root_cert().exists():
+        if not self.get_minica_root_cert_file().exists():
             print("Initializing minica root cert")
             code = self.create_certificate("tmp.loc")
             if code > 0:
                 print("Can't initialize minica subsystem")
                 exit(code)
             rmtree(self.get_domain_pem_file("tmp.loc").parent)
-            self.get_minica_root_cert().chmod(0o644)
+            self.get_minica_root_cert_file().chmod(0o644)
 
     def create_certificate(self, domain: str) -> int:
         kept_cwd = getcwd()
@@ -46,8 +45,13 @@ class CertManager:
         chdir(kept_cwd)
         return value
 
-    def get_minica_root_cert(self) -> Path:
+    def get_minica_root_cert_file(self) -> Path:
         return self.cert_dir / "minica.pem"
+
+    def get_minica_root_cert(self) -> x509.Certificate:
+        return x509.load_pem_x509_certificate(
+            self.get_minica_root_cert_file().read_bytes(), backend=default_backend()
+        )
 
     def get_domain_pem_file(self, domain: str) -> Path:
         return self.cert_dir / domain / "cert.pem"

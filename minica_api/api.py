@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from shutil import rmtree
 
 from cryptography import x509
-from fastapi import FastAPI, HTTPException
+from cryptography.hazmat.primitives.serialization import Encoding
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
@@ -41,10 +42,32 @@ async def certupdate(domain: str):
 
 @app.get("/root")
 async def root():
-    if not cert_manager.get_minica_root_cert().exists():
+    if not cert_manager.get_minica_root_cert_file().exists():
         raise HTTPException(404, {"message": "Root ca has not yet been generated"})
 
-    return {"cert": cert_manager.get_minica_root_cert().read_text().strip()}
+    return {"cert": cert_manager.get_minica_root_cert_file().read_text().strip()}
+
+
+@app.get("/root/pem")
+async def root():
+    if not cert_manager.get_minica_root_cert_file().exists():
+        raise HTTPException(404, {"message": "Root ca has not yet been generated"})
+
+    return Response(
+        cert_manager.get_minica_root_cert().public_bytes(Encoding.PEM),
+        headers={"Content-Disposition": 'attachment; filename="cert.pem"'},
+    )
+
+
+@app.get("/root/der")
+async def root():
+    if not cert_manager.get_minica_root_cert_file().exists():
+        raise HTTPException(404, {"message": "Root ca has not yet been generated"})
+
+    return Response(
+        cert_manager.get_minica_root_cert().public_bytes(Encoding.DER),
+        headers={"Content-Disposition": 'attachment; filename="cert.crt"'},
+    )
 
 
 @app.get("/expires")
