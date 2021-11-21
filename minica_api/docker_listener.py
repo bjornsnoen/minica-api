@@ -60,7 +60,7 @@ class Listener:
             getenv("HOST_IP"),
         )
         single(
-            "domains",
+            getenv("MQTT_DOMAINS_TOPIC", "domains"),
             payload=dumps({"domain": domain, "ip": host_ip}),
             hostname=mqtt_host,
             port=port,
