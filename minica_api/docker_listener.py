@@ -53,7 +53,7 @@ class Listener:
 
         mqtt_host, port, host_ip = (
             getenv("MQTT_HOST"),
-            int(getenv("MQTT_PORT"), 1883),
+            int(getenv("MQTT_PORT", 1883)),
             getenv("HOST_IP"),
         )
 
