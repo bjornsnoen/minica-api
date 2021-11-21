@@ -59,7 +59,7 @@ up and expose the api to the internet.
 ## MQTT publishing
 If you enable the docker listener, you can also optionally enable MQTT publishing of discovered domains.
 The message will by default be published on the `domains` topic, but that's configurable via env vars.
-You must define three environment variables for the listener to publish the domains to MQTT.
+You must define at least MQTT_HOST and HOST_IP for the listener to publish found domains to MQTT.
 
 | Env var            | Description                                                                 | Default |
 |--------------------|-----------------------------------------------------------------------------|---------|
