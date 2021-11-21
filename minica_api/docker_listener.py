@@ -54,11 +54,13 @@ class Listener:
             or not getenv("HOST_IP", False)
         ):
             return
+
         mqtt_host, port, host_ip = (
             getenv("MQTT_HOST"),
             int(getenv("MQTT_PORT")),
             getenv("HOST_IP"),
         )
+
         single(
             getenv("MQTT_DOMAINS_TOPIC", "domains"),
             payload=dumps({"domain": domain, "ip": host_ip}),
