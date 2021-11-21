@@ -53,7 +53,7 @@ If you've got a cert about to expire you can PUT it to update it. If you try to 
 
 `curl -X PUT https://minica.home/certs/example.home`
 
-There is not GET api, except `/root`, which gives you the contents of `minica.pem`, in case you mess
+There is no GET api, except `/root`, which gives you the contents of `minica.pem`, in case you mess
 up and expose the api to the internet.
 
 ## MQTT publishing
