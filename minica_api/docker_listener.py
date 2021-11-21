@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
+from json import dumps
 from os import getenv
 from re import search
-from time import sleep
 
 import docker
+from paho.mqtt.publish import single
 
 from minica_api.certificates import CertManager
 
@@ -20,6 +21,8 @@ class Listener:
             decode=True,
         )
 
+        discovered_domains = set()
+
         for event in event_stream:
             labels: dict[str, str] = event["Actor"]["Attributes"]
             routes = set(
@@ -35,8 +38,33 @@ class Listener:
                 if len(match.groups()) < 1:
                     continue
                 domain = match.groups()[0]
+
+                if domain in discovered_domains:
+                    continue
+
                 result = self.cert_manager.touch_cert(domain)
                 print(result)
+                self.publish(domain)
+                discovered_domains.add(domain)
+
+    def publish(self, domain: str):
+        if (
+            not getenv("MQTT_HOST", False)
+            or not getenv("MQTT_PORT", False)
+            or not getenv("HOST_IP", False)
+        ):
+            return
+        mqtt_host, port, host_ip = (
+            getenv("MQTT_HOST"),
+            int(getenv("MQTT_PORT")),
+            getenv("HOST_IP"),
+        )
+        single(
+            "domains",
+            payload=dumps({"domain": domain, "ip": host_ip}),
+            hostname=mqtt_host,
+            port=port,
+        )
 
 
 if __name__ == "__main__":
