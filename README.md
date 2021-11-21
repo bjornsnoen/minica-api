@@ -55,3 +55,23 @@ If you've got a cert about to expire you can PUT it to update it. If you try to 
 
 There is not GET api, except `/root`, which gives you the contents of `minica.pem`, in case you mess
 up and expose the api to the internet.
+
+## MQTT publishing
+If you enable the docker listener, you can also optionally enable MQTT publishing of discovered domains.
+The message will by default be published on the `domains` topic, but that's configurable via env vars.
+You must define three environment variables for the listener to publish the domains to MQTT.
+
+| Env var            | Description                                                                 | Default |
+|--------------------|-----------------------------------------------------------------------------|---------|
+| MQTT_HOST          | IP address or domain where MQTT is running.                                 | None    |
+| MQTT_PORT          | Port MQTT is running on.                                                    | 1883    |
+| HOST_IP            | The IP address of the machine running docker. Published along with domains. | None    |
+| MQTT_DOMAINS_TOPIC | The MQTT topic on which to publish discovered domain.                       | domains |
+
+The message published will be a json string with two fields, domain and ip, like this:
+```json
+{
+  "domain": "discovered_domain.tld",
+  "ip": "192.168.1.10"
+}
+```

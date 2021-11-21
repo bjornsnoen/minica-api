@@ -48,16 +48,12 @@ class Listener:
                 discovered_domains.add(domain)
 
     def publish(self, domain: str):
-        if (
-            not getenv("MQTT_HOST", False)
-            or not getenv("MQTT_PORT", False)
-            or not getenv("HOST_IP", False)
-        ):
+        if not getenv("MQTT_HOST", False) or not getenv("HOST_IP", False):
             return
 
         mqtt_host, port, host_ip = (
             getenv("MQTT_HOST"),
-            int(getenv("MQTT_PORT")),
+            int(getenv("MQTT_PORT"), 1883),
             getenv("HOST_IP"),
         )
 
