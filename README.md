@@ -20,9 +20,7 @@ should look something like this
 ```yml
 services:
     minica:
-        image: minica-api
-        build:
-            context: ./minica-api
+        image: ghcr.io/bjornsnoen/minica-traefik-api:latest
         volumes:
             - ./certificates:/app/certificates
             - /var/run/docker.sock:/var/run/docker.sock:ro
