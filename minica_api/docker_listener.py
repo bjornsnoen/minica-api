@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from json import dumps
 from os import getenv
-from re import search
+from re import findall
 
 import docker
 from paho.mqtt.publish import single
@@ -34,18 +34,18 @@ class Listener:
             )
 
             for route in routes:
-                match = search(r"Host\(`(.+)`\)", route)
-                if len(match.groups()) < 1:
-                    continue
-                domain = match.groups()[0]
-
-                if domain in discovered_domains:
+                domains = findall(r"Host\(`(.+?)`\)", route)
+                if len(domains) < 1:
                     continue
 
-                result = self.cert_manager.touch_cert(domain)
-                print(result)
-                self.publish(domain)
-                discovered_domains.add(domain)
+                for domain in domains:
+                    if domain in discovered_domains:
+                        continue
+
+                    result = self.cert_manager.touch_cert(domain)
+                    print(result)
+                    self.publish(domain)
+                    discovered_domains.add(domain)
 
     def publish(self, domain: str):
         if not getenv("MQTT_HOST", False) or not getenv("HOST_IP", False):
