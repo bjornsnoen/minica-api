@@ -14,6 +14,7 @@ docker = "^5.0.3"
 supervisor = "^4.2.2"
 minicapy = "^1.0.0"
 paho-mqtt = "^1.6.1"
+inflect = "^5.4.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.10b0"

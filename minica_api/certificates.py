@@ -10,6 +10,8 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from minicapy.minica import create_domain_cert
 
+from minica_api.user import donate_certificates, get_user
+
 
 class CertificateDoesNotExistException(Exception):
     pass
@@ -24,6 +26,7 @@ class GeneratePemResponse:
 
 class CertManager:
     cert_dir = Path("certificates")
+    user = get_user()
 
     def __init__(self):
         if not self.cert_dir.is_dir():
@@ -37,16 +40,28 @@ class CertManager:
                 exit(code)
             rmtree(self.get_domain_pem_file("tmp.loc").parent)
             self.get_minica_root_cert_file().chmod(0o644)
+            donate_certificates(
+                [self.get_minica_root_cert_file(), self.get_minica_root_key_file()],
+                to_user=self.user,
+            )
 
     def create_certificate(self, domain: str) -> int:
         kept_cwd = getcwd()
         chdir(self.cert_dir)
         value = create_domain_cert(domain)
         chdir(kept_cwd)
+        if value == 0:
+            pem_file_path = self.get_domain_pem_file(domain)
+            donate_certificates(
+                [pem_file_path, pem_file_path.parent], to_user=self.user
+            )
         return value
 
     def get_minica_root_cert_file(self) -> Path:
         return self.cert_dir / "minica.pem"
+
+    def get_minica_root_key_file(self) -> Path:
+        return self.cert_dir / "minica-key.pem"
 
     def get_minica_root_cert(self) -> x509.Certificate:
         return x509.load_pem_x509_certificate(
@@ -107,3 +122,6 @@ class CertManager:
             return self.generate_pem(domain)
 
         return GeneratePemResponse(error=0, message="Not due to expire", domain=domain)
+
+    def get_all_certs(self) -> list[Path]:
+        return [cert for cert in self.cert_dir.glob("*")]

@@ -24,7 +24,7 @@ class Listener:
         discovered_domains = set()
 
         for event in event_stream:
-            labels: dict[str, str] = event["Actor"]["Attributes"]
+            labels: dict[str, str] = event["Actor"]["Attributes"]  # type: ignore
             routes = set(
                 [
                     val
@@ -52,13 +52,13 @@ class Listener:
             return
 
         mqtt_host, port, host_ip = (
-            getenv("MQTT_HOST"),
+            getenv("MQTT_HOST", default=""),
             int(getenv("MQTT_PORT", 1883)),
             getenv("HOST_IP"),
         )
 
         single(
-            getenv("MQTT_DOMAINS_TOPIC", "domains"),
+            getenv("MQTT_DOMAINS_TOPIC", default="domains"),
             payload=dumps({"domain": domain, "ip": host_ip}),
             hostname=mqtt_host,
             port=port,

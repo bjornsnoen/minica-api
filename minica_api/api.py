@@ -60,7 +60,7 @@ async def root():
 
 
 @app.get("/root/der")
-async def root():
+async def root_der():
     if not cert_manager.get_minica_root_cert_file().exists():
         raise HTTPException(404, {"message": "Root ca has not yet been generated"})
 
@@ -76,6 +76,6 @@ async def expires():
     for file in cert_manager.cert_dir.iterdir():
         if not file.is_dir():
             continue
-        domains[file.name] = cert_manager.get_domain_pem(file.name).not_valid_after
+        domains[file.name] = cert_manager.get_domain_pem(file.name).not_valid_after  # type: ignore
 
     return domains

@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v2.5
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/app/certificates"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certificates:/app/certificates
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.redirectssl.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.middlewares=redirectssl@docker"
+      - "traefik.http.routers.traefiksecure.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefiksecure.tls=true"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  minica_api:
+    build: .
+    volumes:
+      - ./certificates:/app/certificates
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      USER_ID: 1000
+      GROUP_ID: 1000
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      DOCKER_LISTEN: "yes"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minica.rule=Host(`minica.localhost`)"
+      - "traefik.http.routers.minica.middlewares=redirectssl@docker"
+      - "traefik.http.routers.minicasecure.rule=Host(`minica.localhost`)"
+      - "traefik.http.routers.minicasecure.tls=true"
+
+  nginx:
+    image: nginx
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx.rule=Host(`nginx.localhost`)"
+      - "traefik.http.routers.nginx.middlewares=redirectssl@docker"
+      - "traefik.http.routers.nginxsecure.rule=Host(`nginx.localhost`)"
+      - "traefik.http.routers.nginxsecure.tls=true"
