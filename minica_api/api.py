@@ -49,7 +49,7 @@ async def root():
 
 
 @app.get("/root/pem")
-async def root():
+async def root_pem():
     if not cert_manager.get_minica_root_cert_file().exists():
         raise HTTPException(404, {"message": "Root ca has not yet been generated"})
 
