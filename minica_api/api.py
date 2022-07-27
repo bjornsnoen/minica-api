@@ -5,6 +5,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.encoders import jsonable_encoder
+from fastapi.param_functions import Body
 from fastapi.responses import JSONResponse
 
 from minica_api.certificates import (
@@ -18,8 +19,10 @@ app = FastAPI()
 
 
 @app.post("/certs/{domain}", response_model=GeneratePemResponse)
-async def certgen(domain: str):
-    answer = cert_manager.generate_pem(domain)
+async def certgen(
+    domain: str, include_base_domain: bool = Body(embed=True, default=False)
+):
+    answer = cert_manager.generate_pem(domain, include_base_domain)
 
     if answer.error > 0:
         return JSONResponse(jsonable_encoder(answer), status_code=409)
@@ -79,3 +82,8 @@ async def expires():
         domains[file.name] = cert_manager.get_domain_pem(file.name).not_valid_after  # type: ignore
 
     return domains
+
+
+@app.delete("/certs/{domain}")
+async def delete(domain: str) -> bool:
+    return cert_manager.delete_cert(domain)
