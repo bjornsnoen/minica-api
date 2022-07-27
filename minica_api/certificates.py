@@ -8,7 +8,7 @@ from typing import Optional
 import toml
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from minicapy.minica import create_domain_cert
+from minicapy.minica import create_domain_cert, create_wildcard_certificate
 
 from minica_api.user import donate_certificates, get_user
 
@@ -38,6 +38,7 @@ class CertManager:
             if code > 0:
                 print("Can't initialize minica subsystem")
                 exit(code)
+
             rmtree(self.get_domain_pem_file("tmp.loc").parent)
             self.get_minica_root_cert_file().chmod(0o644)
             donate_certificates(
@@ -45,10 +46,19 @@ class CertManager:
                 to_user=self.user,
             )
 
-    def create_certificate(self, domain: str) -> int:
+    def is_wildcard(self, domain: str) -> bool:
+        return domain.startswith("*.") and len(domain.split(".")) >= 3
+
+    def create_certificate(self, domain: str, include_base_domain=False) -> int:
         kept_cwd = getcwd()
+        is_wildcard_req = self.is_wildcard(domain)
         chdir(self.cert_dir)
-        value = create_domain_cert(domain)
+
+        if is_wildcard_req:
+            value = create_wildcard_certificate(domain, include_base_domain)
+        else:
+            value = create_domain_cert(domain)
+
         chdir(kept_cwd)
         if value == 0:
             pem_file_path = self.get_domain_pem_file(domain)
@@ -69,7 +79,7 @@ class CertManager:
         )
 
     def get_domain_pem_file(self, domain: str) -> Path:
-        return self.cert_dir / domain / "cert.pem"
+        return self.cert_dir / domain.replace("*", "_") / "cert.pem"
 
     def get_domain_pem(self, domain: str) -> x509.Certificate:
         pem = self.get_domain_pem_file(domain)
@@ -80,8 +90,10 @@ class CertManager:
         cert = x509.load_pem_x509_certificate(pem_data, backend=default_backend())
         return cert
 
-    def generate_pem(self, domain: str) -> GeneratePemResponse:
-        return_code = self.create_certificate(domain)
+    def generate_pem(
+        self, domain: str, include_base_domain: bool = False
+    ) -> GeneratePemResponse:
+        return_code = self.create_certificate(domain, include_base_domain)
         self.update_traefik_list()
         return GeneratePemResponse(
             error=return_code,
@@ -125,3 +137,11 @@ class CertManager:
 
     def get_all_certs(self) -> list[Path]:
         return [cert for cert in self.cert_dir.glob("*")]
+
+    def delete_cert(self, domain: str) -> bool:
+        pem_file = self.get_domain_pem_file(domain)
+        if not pem_file.exists():
+            return False
+        rmtree(pem_file.parent)
+        self.update_traefik_list()
+        return True

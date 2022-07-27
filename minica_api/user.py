@@ -1,5 +1,5 @@
 """Module for creating users and chowing certificates to them"""
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from os import chown, getenv
 from pathlib import Path
 from subprocess import run
@@ -14,6 +14,13 @@ class User:
     uid: int
     gid: int
     username: str
+
+    def __eq__(self, other: "User"):
+        own_fields = fields(self.__class__)
+        for field in own_fields:
+            if self.__getattribute__(field.name) != other.__getattribute__(field.name):
+                return False
+        return True
 
 
 def get_existing_users() -> list[User]:
@@ -47,6 +54,14 @@ def create_user(user: User):
     ]
     proc = run(command)
     if proc.returncode > 0:
+        existing_users = get_existing_users()
+        for existing_user in existing_users:
+            if existing_user == user:
+                # There's a weird condition that happens when starting with auto source reloading
+                # Basically a race condition, but the end result is that the user does exist, so
+                # we're fine and done here
+                print(f"Attempted to create existing user {user}, proceeding as normal")
+                return
         raise Exception(f"Couldn't create desired user {user}")
 
 

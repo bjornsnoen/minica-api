@@ -32,37 +32,37 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.minica.rule=Host(`minica.home`)"
+      - "traefik.http.routers.minica.rule=Host(`minica.localhost`)"
       - "traefik.http.routers.minica.middlewares=redirectssl@docker"
-      - "traefik.http.routers.minicasecure.rule=Host(`minica.home`)"
+      - "traefik.http.routers.minicasecure.rule=Host(`minica.localhost`)"
       - "traefik.http.routers.minicasecure.tls=true"
 
-    traefik:
-      container_name: traefik
-      image: traefik:v2.5
-      command:
-        - "--log.level=DEBUG"
-        - "--api.insecure=true"
-        - "--providers.docker=true"
-        - "--providers.docker.exposedbydefault=false"
-        - "--entrypoints.web.address=:80"
-        - "--entrypoints.websecure.address=:443"
-        - "--providers.file.directory=/app/certificates"
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-        - ./certificates:/app/certificates
-      restart: unless-stopped
-      ports:
-        - 80:80
-        - 443:443
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.middlewares.redirectssl.redirectscheme.scheme=https"
-        - "traefik.http.routers.traefik.rule=Host(`traefik.home`)"
-        - "traefik.http.routers.traefik.middlewares=redirectssl@docker"
-        - "traefik.http.routers.traefiksecure.rule=Host(`traefik.home`)"
-        - "traefik.http.routers.traefiksecure.tls=true"
-        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+  traefik:
+    container_name: traefik
+    image: traefik:v2.5
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/app/certificates"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certificates:/app/certificates
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.redirectssl.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.middlewares=redirectssl@docker"
+      - "traefik.http.routers.traefiksecure.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefiksecure.tls=true"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 ```
 
 Minica will create a root certificate authority in the `./certificates`
@@ -73,20 +73,54 @@ services (that are using traefik).
 The docker listener works very well if all your services are running in the
 same docker stack, and if they're all being routed by traefik, but what about
 your octopi instance running on a separate raspberry pi? This also comes with a
-very simple RESTful api that you can use to create certificates. To generate a
-certificate for the domain `example.home`, simply POST the domain to the api.
+very simple RESTful api that you can use to create certificates.
 
-`curl -X POST https://minica.home/certs/example.home`
+### Generating certificates
+To generate a certificate for the domain `example.localhost`, simply POST the domain
+to the api.
+
+`curl -X POST https://minica.localhost/certs/example.localhost`
 
 If you attempt to POST a domain that we've already created a certificate for
-you'll get a 409 conflict. If you've got a cert about to expire you can PUT it
+you'll get a 409 conflict. 
+
+### Generating wildcards
+The API supports creating wildcard certificates, although creating certificates
+is so easy you should probably consider if you really need a wildcard. When
+creating wildcard certificates, you can tell minica to also include the base
+domain in the SAN extension (basically allow the certificate to be valid for
+both *.domain.tld and domain.tld). To instruct the api to do this, post
+`include_base_domain=True` in the request body.
+
+```
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"include_base_domain": true}' \
+  https://minica.localhost/certs/\*.example.localhost
+```
+
+### Renewing certificates
+If you've got a cert about to expire you can PUT it
 to update it. If you try to PUT a domain more than 30 days before its expiry
 you'll also get a 409 conflict.
 
-`curl -X PUT https://minica.home/certs/example.home`
+`curl -X PUT https://minica.localhost/certs/example.localhost`
 
-There is no GET api, except `/root`, which gives you the contents of
-`minica.pem`, in case you mess up and expose the api to the internet.
+To see when your certificates are going to expire, use `/expires`
+
+`curl https://minica.localhost/expires | jq .`
+
+### Retrieving certificates
+There is no GET api for retrieving domain certificates,in case you mess up and
+expose the api to the internet. You can however fetch the minica root
+certificate at `/root`, `/root/pem`, and `/root/der` which gives you the
+contents of `minica.pem` in the specified format. 
+
+### Deleting certificates
+If you're done with a domain and don't want the certificate hanging about,
+you can delete it via the API.
+
+`curl -X DELETE https://minica.localhost/certs/example.localhost`
 
 ## Configuration
 The service is configured via environment variables.
