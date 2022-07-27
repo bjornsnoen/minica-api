@@ -116,6 +116,12 @@ expose the api to the internet. You can however fetch the minica root
 certificate at `/root`, `/root/pem`, and `/root/der` which gives you the
 contents of `minica.pem` in the specified format. 
 
+### Deleting certificates
+If you're done with a domain and don't want the certificate hanging about,
+you can delete it via the API.
+
+`curl -X DELETE https://minica.localhost/certs/example.localhost`
+
 ## Configuration
 The service is configured via environment variables.
 
