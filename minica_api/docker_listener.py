@@ -34,7 +34,7 @@ class Listener:
             )
 
             for route in routes:
-                domains = findall(r"Host\(`(.+?)`\)", route)
+                domains = findall(r"(h|H)ost\(`(.+?)`\)", route)
                 if len(domains) < 1:
                     continue
 
