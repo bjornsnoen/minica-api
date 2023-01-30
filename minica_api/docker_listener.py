@@ -34,7 +34,8 @@ class Listener:
             )
 
             for route in routes:
-                domains = findall(r"(h|H)ost\(`(.+?)`\)", route)
+                from re import IGNORECASE
+                domains = findall(r"Host\(`(.+?)`\)", route, flags=IGNORECASE)
                 if len(domains) < 1:
                     continue
 
